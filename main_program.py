@@ -11,7 +11,7 @@ class price_compare():
     def __init__(self, product_name):
 
         def replace_string():
-            replace_string = ['/', ':', '【', '】', '《', '》', '+', '※', '(', ')', '_']
+            replace_string = ['/', ':', '【', '】', '《', '》', '+', '※', '(', ')', '_', '<', '>']
             for i in self.product_name:
                 if i in replace_string:
                     self.product_name = self.product_name.replace(i, ' ')
@@ -307,11 +307,12 @@ class price_compare():
 
         if result.find_all('div', {'class': 'wrap yui3-g'}):
             for elements in result.find_all('div', {'class': 'wrap yui3-g'}):
-                for product in elements.find_all('div', {'class': 'yui3-u srp-pdcontent'}):
+                for product in elements.find_all('div', {'class': 'srp-pdtitle ellipsis'}):
                     yahoo.append(product.text.replace('\n', ''))
                 for prices in elements.find_all('div', {'class': 'srp-pdprice'}):
-                    for price in prices.find_all('span', {'class': 'srp-listprice-class'}):
-                        yahoo.append(price.text.replace('$', ''))
+                    yahoo.append(prices.text.replace('活動價 $', '').replace('起', '').replace('\n', ''))
+                    # for price in prices.find_all('span', {'class': 'srp-listprice-class'}):
+                    #     yahoo.append(price.text.replace('$', ''))
         elif result.find_all('div', {'class': 'srp-pdcontent'}):
             for elements in result.find_all('div', {'class': 'srp-pdcontent'}):
                 for product in elements.find_all('div', {'class': 'srp-pdtitle'}):
@@ -323,7 +324,7 @@ class price_compare():
                     else:
                         for price in prices.find_all('div', {'class': 'srp-listprice'}):
                             yahoo.append(price.text.replace('網路價 $', ''))
-                            #             yahoo.append(price.text.replace('$',''))
+                            yahoo.append(price.text.replace('$',''))
 
         ###將結果變成list裡面包tuple(產品, 價格)####
         yahoo_display = list()
@@ -435,47 +436,68 @@ class price_compare():
 
     def etmall(self):
 
-        parameters = {'SearchKeyword': self.correct_product_name,
-                      'SearchKey': self.correct_product_name,
-                      'ProductPage': '0',
-                      'RecordsPerPage': '40',
-                      'OrderBy': '_weight_,DESC'}
+        # parameters = {'SearchKeyword': self.correct_product_name,
+        #               'SearchKey': self.correct_product_name,
+        #               'ProductPage': '0',
+        #               'RecordsPerPage': '40',
+        #               'OrderBy': '_weight_,DESC'}
+        #
 
-        result = str(self.get_page(self.__etmall_url, parameters = parameters))
-        return result
-        # pat_product = 'aPL_GOODNM\[.*?\)'
-        # # pat2='aPL_PRC\[.*?\;'
-        # pat_price = 'aPL_DISCOUNT_VALUE\[.*?\;'
-        # product = re.findall(pat_product, result)
-        # price = re.findall(pat_price, result)
-        #
-        # etmall_list = list()
-        # for i in range(len(product)):
-        #     product_remove = re.sub(r"^aPL.*\car\('", '', product[i]).replace("')", '')
-        #     price_remove = re.sub(r"^aPL.*\= \'", '', price[i]).replace("';", '')
-        #     etmall_list.extend([product_remove, price_remove])
-        #
-        # ####將結果變成list裡面包tuple(產品, 價格)####
-        # etmall_display = list()
-        # a, b = 0, 2
-        # x = int(len(etmall_list) / 2)
-        # while x != 0:
-        #     etmall_display.append(tuple(etmall_list[a:b]))
-        #     x -= 1
-        #     a, b = b, b + 2
-        # ####將結果變成list裡面包tuple(產品, 價格)####
-        # return etmall_display
+        pat_product = 'aPL_GOODNM\[.*?\)'
+        pat_price = 'aPL_DISCOUNT_VALUE\[.*?\;'
+        pat_price2 = 'aPL_PRC\[.*?\;'
+
+        result = str(self.get_page('http://www.etmall.com.tw/AllSearchFormResult.aspx?SearchKeyword=' + self.encode_pro_name + '&CategoryID='))
+
+        product = re.findall(pat_product, result)
+        price = re.findall(pat_price, result)
+        price2 = re.findall(pat_price2, result)
+
+        # print(price2)
+
+        etmall_list = list()
+        for i in range(len(product)):
+            product_remove = re.sub(r"^aPL.*\car\('", '', product[i]).replace("')", '')
+            if re.sub(r"^aPL.*\= \'", '', price[i]).replace("';", ''):
+                price_remove = re.sub(r"^aPL.*\= \'", '', price[i]).replace("';", '')
+            else:
+                price_remove = re.sub(r"^aPL.*\= \'", '', price2[i]).replace("';", '')
+            etmall_list.extend([product_remove, price_remove])
+
+        ####將結果變成list裡面包tuple(產品, 價格)####
+        etmall_display = list()
+        a, b = 0, 2
+        x = int(len(etmall_list) / 2)
+        while x != 0:
+            etmall_display.append(tuple(etmall_list[a:b]))
+            x -= 1
+            a, b = b, b + 2
+        ####將結果變成list裡面包tuple(產品, 價格)####
+        return etmall_display
+        ####將結果變成list裡面包tuple(產品, 價格)####
+        etmall_display = list()
+        a, b = 0, 2
+        x = int(len(etmall_list) / 2)
+        while x != 0:
+            etmall_display.append(tuple(etmall_list[a:b]))
+            x -= 1
+            a, b = b, b + 2
+        ####將結果變成list裡面包tuple(產品, 價格)####
+        return etmall_display
 
 
     def umall(self):
 
-        parameters = {'SearchKeyword': self.correct_product_name,
-                      'SearchKey': self.correct_product_name,
-                      'ProductPage': '0',
-                      'RecordsPerPage': '40',
-                      'OrderBy': '_weight_,DESC'}
+        # parameters = {'SearchKeyword': self.correct_product_name,
+        #               'SearchKey': self.correct_product_name,
+        #               'ProductPage': '0',
+        #               'RecordsPerPage': '40',
+        #               'OrderBy': '_weight_,DESC'}
 
-        result = str(self.get_page('http://www.u-mall.com.tw/Search.aspx', parameters=parameters))
+        # result = str(self.get_page('http://www.u-mall.com.tw/Search.aspx', parameters=parameters))
+
+        result = str(self.get_page('http://www.u-mall.com.tw/Search.aspx?SearchKeyword=' + self.encode_pro_name))
+
         pat_product = 'Tmp = changecar\(\'.*?\)'
         pat_price = 'Sys_showPRCValue\(.*?\)'
         product = re.findall(pat_product, result)
@@ -513,11 +535,17 @@ class price_compare():
 
         momo_data = self.momo()
         pchome_data = self.pchome()
-        payeasy_data = self.payeasy()
+        yahoo_data = self.yahoo()
+        umall_data = self.umall()
+        etmall_data = self.umall()
+        udn_data = self.udn()
+        gohappy_data = self.gohappy()
+        asap_data = self.asap()
 
         ####計算資料的index####
         def counter():
-            len_all = len(momo_data + pchome_data + payeasy_data)
+            len_all = len(asap_data + momo_data + pchome_data + yahoo_data +
+                          umall_data + etmall_data + udn_data + gohappy_data)
             yield from range(len_all)
 
         counter = counter()
@@ -544,27 +572,27 @@ class price_compare():
         ####insert pchome data into elasticsearch####
 
         ####insert payeasy data into elasticsearch####
-        payeasy_dict = dict()
+        asap_dict = dict()
 
-        for i in range(len(payeasy_data)):
-            payeasy_dict['name'] = payeasy_data[i][0]
-            payeasy_dict['price'] = int(payeasy_data[i][1])
-            payeasy_dict['company'] = 'payeasy'
-            es.index(index='product', doc_type='3C', id=next(counter), body=payeasy_dict)
+        for i in range(len(asap_data)):
+            asap_dict['name'] = asap_data[i][0]
+            asap_dict['price'] = int(asap_data[i][1])
+            asap_dict['company'] = 'asap'
+            es.index(index='product', doc_type='3C', id=next(counter), body=asap_dict)
             ####insert payeasy data into elasticsearch####
 
 if __name__ == '__main__':
-        price = price_compare('【Nintendo】任天堂 FAMICOM Mini 經典迷你紅白機')
-        # price = price_compare('【福利網獨享】iRobot Roomba 880 機器人掃地機/吸塵器 ')
-        price.print()
-        # print(('ASAP購物', price.asap()))
-        # print(('森森購物', price.umall()))
-        # print(('東森購物', price.etmall()))
-        # print(('YAHOO購物', price.yahoo()))
-        # print(('PCHOME購物', price.pchome()))
-        # print(('MOMO購物', price.momo()))
-        # print(('UDN購物', price.udn()))
-        # print(('GOHAPPY購物', price.gohappy()))
+        # price = price_compare('RICHOME 超值桌上型書架-5色')
+        price = price_compare('EMINENT 【衝鋒陷陣】行李箱 28吋<暗岩藍>KF16')
+        # price.to_ES()
+        print(('ASAP購物', price.asap()))
+        print(('森森購物', price.umall()))
+        print(('東森購物', price.etmall()))
+        print(('YAHOO購物', price.yahoo()))
+        print(('PCHOME購物', price.pchome()))
+        print(('MOMO購物', price.momo()))
+        print(('UDN購物', price.udn()))
+        print(('GOHAPPY購物', price.gohappy()))
         # Nintendo
         # 任天堂
         # 迷你紅白機
