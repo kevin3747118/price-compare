@@ -30,7 +30,7 @@ class price_compare():
         self.__momo_url = 'http://www.momoshop.com.tw/mosearch/' + self.encode_pro_name + '.html'
         self.__pchome_url = 'http://ecshweb.pchome.com.tw/search/v3.3/all/results?q=' + self.encode_pro_name + '&page=1&sort=rnk/dc'
         self.__yahoo_url = 'https://tw.search.buy.yahoo.com/search/shopping/product?p=' + self.encode_pro_name + '&qt=product&cid=&clv='
-        self.__udn_url = 'http://shopping.udn.com/mall/cus/search/SearchAction.do?start=1&keyword=' + self.sencode_pro_name + '&cid=&sort=weight&pickup=&minP=&maxP=&pageSize=20&key=32303137303230f7f25da1a0ab06cd67c0'
+        self.__udn_url = 'http://shopping.udn.com/mall/cus/search/SearchAction.do?start=1&keyword=' + self.encode_pro_name + '&cid=&sort=weight&pickup=&minP=&maxP=&pageSize=20&key=32303137303230f7f25da1a0ab06cd67c0'
         self.__etmall_url = 'http://www.etmall.com.tw/Pages/AllSearchFormResult.aspx'
 
     def print(self):
