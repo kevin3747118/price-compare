@@ -267,8 +267,9 @@ class price_compare():
 
         gohappy_list = list()
         for elements in result.find_all('ol', {'class': 'proddata-list'}):
-            for product in elements.find_all('h3'):
-                if '【線上兌換】' not in product.text:
+            for product in elements.find_all('li', {'class': 'prodname'}):
+                if ('【兌】' or '【線上兌換】') not in product.text:
+                    # print(product.text)
                     gohappy_list.append(product.text.replace('\n', ''))
             for prices in elements.find_all('table', {'class': 'price-table'}):
                 if '純點數' not in prices.text:
@@ -766,7 +767,7 @@ if __name__ == '__main__':
 #
     np = payeasy.db('AZURE')
     parse_store = np.do_query("SELECT [PID_NUM],[PRO_NAME],[PWB_NAME] "
-                                "FROM [dbo].[PRODUCT_PRICE_COMPARE] WHERE ASAP_PNAME1 is null")
+                                "FROM [dbo].[PRODUCT_PRICE_COMPARE] WHERE PID_NUM in (3382882,3383142)")
 
     # ###test area###
     # # asap_data, gohappy_data, udn_data, pchome_data,
@@ -839,7 +840,7 @@ if __name__ == '__main__':
     # # # print(price.yahoo())
     # price.to_ES()
     # print(price.from_ES())
-    # test = ['@Nature玫瑰蜂王乳保濕水嫩青春露','【台北/烏來】泉世界溫泉會館一泊二食雙人夜湯專案(A)']
+    # test = ['@Nature玫瑰蜂王乳保濕水嫩青春露','泉世界溫泉會館一泊二食雙人夜湯專案(A)']
     # for i in test:
     #     haha = price_compare(i)
     #     print(haha.from_ES())
@@ -857,7 +858,7 @@ if __name__ == '__main__':
     #     print(('MOMO購物', len(price.momo())))
     #     print(('UDN購物', len(price.udn())))
     #     print(('gohappy', len(price.gohappy())))
-    # price = price_compare("PS4 CUH")
+    # price = price_compare("泉世界溫泉會館一泊二食雙人夜湯專案(A)")
     # print(price.correct_product_name)
     # print(('ASAP購物', price.asap()))
     # print(('森森購物', price.umall()))
