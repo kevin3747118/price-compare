@@ -30,7 +30,7 @@ class price_compare():
         self.__momo_url = 'http://www.momoshop.com.tw/mosearch/' + self.encode_pro_name + '.html'
         self.__pchome_url = 'http://ecshweb.pchome.com.tw/search/v3.3/all/results?q=' + self.encode_pro_name + '&page=1&sort=rnk/dc'
         self.__yahoo_url = 'https://tw.search.buy.yahoo.com/search/shopping/product?p=' + self.encode_pro_name + '&qt=product&cid=&clv='
-        self.__udn_url = 'http://shopping.udn.com/mall/cus/search/SearchAction.do?start=1&keyword=' + self.encode_pro_name + '&cid=&sort=weight&pickup=&minP=&maxP=&pageSize=20&key=32303137303230f7f25da1a0ab06cd67c0'
+        self.__udn_url = 'http://shopping.udn.com/mall/cus/search/SearchAction.do?start=1&keyword=' + self.sencode_pro_name + '&cid=&sort=weight&pickup=&minP=&maxP=&pageSize=20&key=32303137303230f7f25da1a0ab06cd67c0'
         self.__etmall_url = 'http://www.etmall.com.tw/Pages/AllSearchFormResult.aspx'
 
     def print(self):
@@ -96,27 +96,28 @@ class price_compare():
         momo = list()
 
         if result.find_all('ul', {'id': 'chessboard'}):
+            # print('1')
             for i in result.find_all('ul', {'id': 'chessboard'}):
                 for x in i.find_all(['a', 'b']):
                     #                 if x.text != '' and len(momo) != 8:
                     if x.text != '':
                         momo.append(x.text)
-        else:
+        elif result.find_all('script'):
+            # print('2')
             for i in result.find_all('script'):
                 momo_goods_url = i.text.strip('location.href=').strip(';').strip('\'"').replace(',', '')
-
-            momo_goods_detail = self.get_page2(momo_goods_url)
-            for i in momo_goods_detail.find_all('div', {'class': 'prdnoteArea'}):
-                for product in i.find('h1'):
-                # for product in i.find_all('h1'):
-                    momo.append(product)
-                for prices in i.find_all('li', {'class': 'special'}):
-                    for price in prices.find('span'):
-                        momo.append(price.replace(',', ''))
-            # for i in momo_goods_detail.find_all('div', {'class': 'prdnoteArea'}):
-            #     momo.append(i.find('h1').text)
-            # for price in i.find('span'):
-            #     momo.append(price.replace(',', ''))
+                # print(momo_goods_url)
+                momo_goods_detail = self.get_page2(momo_goods_url)
+                for i in momo_goods_detail.find_all('div', {'class': 'prdnoteArea'}):
+                    for product in i.find_all('h1'):
+                        momo.append(product.text)
+                    for price in i.find_all('li', {'class': 'special'}):
+                        momo.append(price.text.replace(',', '').replace('促銷價', '').replace('元', '')
+                                    .replace('\r\n', '').replace(' ', '').replace('折扣後價格', ''))
+                # for i in momo_goods_detail.find_all('div', {'class': 'prdnoteArea'}):
+                #     momo.append(i.find('h1').text)
+                # for price in i.find('span'):
+                #     momo.append(price.replace(',', ''))
 
         ####將結果變成list裡面包tuple(產品, 價格)####
         momo_display = list()
@@ -765,35 +766,34 @@ if __name__ == '__main__':
 #
     np = payeasy.db('AZURE')
     parse_store = np.do_query("SELECT [PID_NUM],[PRO_NAME],[PWB_NAME] "
-                                "FROM [dbo].[PRODUCT_PRICE_COMPARE]")
+                                "FROM [dbo].[PRODUCT_PRICE_COMPARE] WHERE ASAP_PNAME1 is null")
 
-    ###test area###
-    # asap_data, gohappy_data, udn_data, pchome_data,
-    # momo_data, yahoo_data, etmall_data, umall_data]
-    # for i in range(len(parse_store)):
-    #     price = price_compare(parse_store[i][1])
-    #     print(price.correct_product_name)
-    #     price.to_ES()
-    # price = price_compare('Sunlus三樂事暖暖熱敷柔毛墊 大 -MHP811')
-    # print(price.correct_product_name)
-    # print(price.from_ES())
-    # print(price.umall())
-    # print(price.etmall())
-    # price.to_ES()
-    # print(price.from_ES())
-    # print(len(price.from_ES()))
-    ###test area###
-
+    # ###test area###
+    # # asap_data, gohappy_data, udn_data, pchome_data,
+    # # momo_data, yahoo_data, etmall_data, umall_data]
+    # # for i in range(len(parse_store)):
+    # #     price = price_compare(parse_store[i][1])
+    # #     print(price.correct_product_name)
+    # #     price.to_ES()
+    # # price = price_compare('Sunlus三樂事暖暖熱敷柔毛墊 大 -MHP811')
+    # # print(price.correct_product_name)
+    # # print(price.from_ES())
+    # # print(price.umall())
+    # # print(price.etmall())
+    # # price.to_ES()
+    # # print(price.from_ES())
+    # # print(len(price.from_ES()))
+    # ###test area###
+    #
     print('start parsing store data')
     for i in range(len(parse_store)):
-        try:
-            price = price_compare(parse_store[i][1])
-            print(price.correct_product_name)
-            result = price.from_ES()
+        price = price_compare(parse_store[i][1])
+            # print(price.correct_product_name)
+        result = price.from_ES()
             # print(result)
-            print('\n')
-        except Exception as e:
-            print(e)
+            # print('\n')
+        # except Exception as e:
+        #     print(e)
         sql_stat = (
                 "update [dbo].[PRODUCT_PRICE_COMPARE] set "
                 " [ASAP_PNAME1] = '" + result[0] + "',[ASAP_PPRICE1]='" + str(result[1]) + "'"
@@ -839,24 +839,12 @@ if __name__ == '__main__':
     # # # print(price.yahoo())
     # price.to_ES()
     # print(price.from_ES())
-    # test = ['SONY SBH80 立體聲頸掛式藍芽耳機']
+    # test = ['@Nature玫瑰蜂王乳保濕水嫩青春露','【台北/烏來】泉世界溫泉會館一泊二食雙人夜湯專案(A)']
     # for i in test:
     #     haha = price_compare(i)
     #     print(haha.from_ES())
-    #     del haha
 
-    # a = price_compare('SONY SBH80 立體聲頸掛式藍芽耳機').from_ES()
-    # b = price_compare('Victorinox Altmont 3.0 標準型後背包').from_ES()
-    # print(a)
-    # print(b)
-    # price = price_compare('PS4 CUH')
-    # print(price.asap())
-    # for i in range(5):
-    #     haha = price_compare('Victorinox Altmont 3.0 標準型後背包')
-    #     result = haha.from_ES()
-    #     print(result)
-    #     haha.delte_ES()
-    #     del haha
+
 
     # print(price.from_ES())
     # for i in range(5):
@@ -869,7 +857,8 @@ if __name__ == '__main__':
     #     print(('MOMO購物', len(price.momo())))
     #     print(('UDN購物', len(price.udn())))
     #     print(('gohappy', len(price.gohappy())))
-    # price = price_compare('Victorinox Altmont 3.0 標準型後背包')
+    # price = price_compare("PS4 CUH")
+    # print(price.correct_product_name)
     # print(('ASAP購物', price.asap()))
     # print(('森森購物', price.umall()))
     # print(('東森購物', price.etmall()))
