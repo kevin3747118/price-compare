@@ -15,15 +15,16 @@ class price_compare():
     def __init__(self, product_name):
 
         def replace_string():
-            replace_string = ['/', ':', '【', '】', '《', '》', '+', '※',
-                              '(', ')', '_', '<', '>', '★', '?', '-', '-'
-                              '紅', '橙', '黃', '綠', '藍', '紫', '白', '灰', '黑', '銀']
+            replace_string = ['/', ':', '【', '】', '《', '》', '+', '※', "'", '$',
+                              '(', ')', '_', '<', '>', '★', '?', '-', '-', '#',
+                              '紅', '橙', '黃', '綠', '藍', '紫', '白', '灰', '黑', '銀',
+                              '停', '用']
             for i in self.product_name:
                 if i in replace_string:
                     self.product_name = self.product_name.replace(i, ' ')
-            return self.product_name.replace('福利網獨享', '')
+            return self.product_name.replace('福利網獨享', '').replace('單一規格', '')
 
-        self.es = Elasticsearch([{'host': '10.10.110.156', 'port': 9200}])
+        self.es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
         self.product_name = product_name
         self.correct_product_name = replace_string()
         self.encode_pro_name = urllib.parse.quote(self.correct_product_name)
@@ -32,6 +33,7 @@ class price_compare():
         self.__yahoo_url = 'https://tw.search.buy.yahoo.com/search/shopping/product?p=' + self.encode_pro_name + '&qt=product&cid=&clv='
         self.__udn_url = 'http://shopping.udn.com/mall/cus/search/SearchAction.do?start=1&keyword=' + self.encode_pro_name + '&cid=&sort=weight&pickup=&minP=&maxP=&pageSize=20&key=32303137303230f7f25da1a0ab06cd67c0'
         self.__etmall_url = 'http://www.etmall.com.tw/Pages/AllSearchFormResult.aspx'
+
 
     def print(self):
         print(self.correct_product_name)
@@ -67,32 +69,43 @@ class price_compare():
 
         return html
 
-    def get_page2(self, url):
-
+    def get_page2(self, url, parameters=None):
+        if parameters:
+            encode_parameters = urllib.parse.urlencode(parameters).encode('utf-8')
+        else:
+            encode_parameters = None
+        # time.sleep(0.43)
         request = urllib.request.Request(url)
 
         ####隨機header挑選####
         foo = [
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.1 Safari/537.36',
             'Mozilla/5.0 (compatible, MSIE 11, Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko',
             'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1'
             'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; da-dk) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1'
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.246'
+            'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2722.0 Safari/537.36'
+            'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.116 Safari/537.36'
         ]
         headers = str(random.choice(foo))
-        # headers = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1'
-        # print(headers)
         ####隨機header挑選####
 
         request.add_header('User-Agent', headers)
-        response = urllib.request.urlopen(request, timeout=180)
-        html = BeautifulSoup(response.read().decode('big5'), 'lxml')
+        # time.sleep(0.32)
+        response = urllib.request.urlopen(request, data=encode_parameters, timeout=180)
+        # html = BeautifulSoup(response.read().decode('big5'), 'lxml')
+        html = BeautifulSoup(response.read(), 'lxml')
         response.close()
 
         return html
 
     def momo(self):
+        try:
+            result = self.get_page(self.__momo_url)
+        except:
+            result = self.get_page2(self.__momo_url)
 
-        result = self.get_page(self.__momo_url)
-
+        # result = self.get_page(self.__momo_url)
         momo = list()
 
         if result.find_all('ul', {'id': 'chessboard'}):
@@ -103,17 +116,19 @@ class price_compare():
                     if x.text != '':
                         momo.append(x.text)
         elif result.find_all('script'):
-            # print('2')
             for i in result.find_all('script'):
                 momo_goods_url = i.text.strip('location.href=').strip(';').strip('\'"').replace(',', '')
                 # print(momo_goods_url)
-                momo_goods_detail = self.get_page2(momo_goods_url)
+                try:
+                    momo_goods_detail = self.get_page2(momo_goods_url)
+                except:
+                    momo_goods_detail = self.get_page(momo_goods_url)
                 for i in momo_goods_detail.find_all('div', {'class': 'prdnoteArea'}):
                     for product in i.find_all('h1'):
                         momo.append(product.text)
                     for price in i.find_all('li', {'class': 'special'}):
-                        momo.append(price.text.replace(',', '').replace('促銷價', '').replace('元', '')
-                                    .replace('\r\n', '').replace(' ', '').replace('折扣後價格', ''))
+                        momo.append(price.text.replace(',', '').replace('促銷價', '').replace('元', '').replace('\n', '')
+                                    .replace('\r\n', '').replace(' ', '').replace('折扣後價格', '').replace('賣貴通報', '').replace('\r', ''))
                 # for i in momo_goods_detail.find_all('div', {'class': 'prdnoteArea'}):
                 #     momo.append(i.find('h1').text)
                 # for price in i.find('span'):
@@ -136,13 +151,19 @@ class price_compare():
         import json
 
         pchome = self.get_page(self.__pchome_url)
-
+        # print(pchome)
         pchome_data = dict()
         for x in pchome.find_all('p'):
             item_data = json.loads(x.text)
-            pchome_data = item_data['prods']
+            try:
+                pchome_data = item_data['prods']
+            except:
+                pchome_data = None
 
-        pchome_display = [(i['name'], int(i['price'])) for i in pchome_data]
+        if pchome_data != None:
+            pchome_display = [(i['name'], int(i['price'])) for i in pchome_data]
+        else:
+            pchome_display = []
 
         return pchome_display
 
@@ -267,14 +288,18 @@ class price_compare():
 
         gohappy_list = list()
         for elements in result.find_all('ol', {'class': 'proddata-list'}):
-            for product in elements.find_all('li', {'class': 'prodname'}):
-                if ('【線上兌換】' not in product.text) and ('【兌】' not in product.text):
-                    # print(product.text)
+            if elements.find_all('dd'):
+                break
+            else:
+                for product in elements.find_all('li', {'class': 'prodname'}):
+                # if ('【線上兌換】' not in product.text) and ('【兌】' not in product.text) and ('(兌換)' not in product.text):
                     gohappy_list.append(product.text.replace('\n', ''))
-            for prices in elements.find_all('table', {'class': 'price-table'}):
-                if '純點數' not in prices.text:
-                    for price in prices.find_all('strong'):
-                        gohappy_list.append(price.text)
+                    # print(product.text.replace('\n', ''))
+                for prices in elements.find_all('table', {'class': 'price-table'}):
+                    if '純點數' not in prices.text:
+                        for price in prices.find_all('strong'):
+                            print(price.text)
+                        #     gohappy_list.append(price.text)
 
         ####將結果變成list裡面包tuple(產品, 價格)####
         gohappy_display = list()
@@ -286,7 +311,8 @@ class price_compare():
             a, b = b, b + 2
         ####將結果變成list裡面包tuple(產品, 價格)####
 
-        return gohappy_display
+        # return gohappy_display
+        # return gohappy_list
 
     def yahoo(self):
 
@@ -671,7 +697,7 @@ class price_compare():
 
         self.to_ES()
         self.refresh_ES()
-        result = self.es.search(index="product", body={"size": 100, "min_score": 1,
+        result = self.es.search(index="product", body={"size": 100, "min_score": 0.5,
                                                        "query": {"match": {
                                                            "name": {"query": self.correct_product_name,
                                                                     "operator": "or"}}}})
@@ -767,7 +793,7 @@ if __name__ == '__main__':
 #
     np = payeasy.db('AZURE')
     parse_store = np.do_query("SELECT [PID_NUM],[PRO_NAME],[PWB_NAME] "
-                                "FROM [dbo].[PRODUCT_PRICE_COMPARE] WHERE PID_NUM in (3382882,3383142)")
+                                "FROM [dbo].[PRODUCT_PRICE_COMPARE] WHERE ASAP_PNAME1 is null")
 
     # ###test area###
     # # asap_data, gohappy_data, udn_data, pchome_data,
@@ -797,30 +823,30 @@ if __name__ == '__main__':
     #     #     print(e)
     #     sql_stat = (
     #             "update [dbo].[PRODUCT_PRICE_COMPARE] set "
-    #             " [ASAP_PNAME1] = '" + result[0] + "',[ASAP_PPRICE1]='" + str(result[1]) + "'"
-    #             ",[ASAP_PNAME2] = '" + result[2] + "',[ASAP_PPRICE2]='" + str(result[3]) + "'"
-    #             ",[ASAP_PNAME3] = '" + result[4] + "',[ASAP_PPRICE3]='" + str(result[5]) + "'"
-    #             ",[UMALL_PNAME1] = '" + result[6] + "',[UMALL_PPRICE1]='" + str(result[7]) + "'"
-    #             ",[UMALL_PNAME2] = '" + result[8] + "',[UMALL_PPRICE2]='" + str(result[9]) + "'"
-    #             ",[UMALL_PNAME3] = '" + result[10] + "',[UMALL_PPRICE3]='" + str(result[11]) + "'"
-    #             ",[ETMALL_PNAME1] = '" + result[12] + "',[ETMALL_PPRICE1]='" + str(result[13]) + "'"
-    #             ",[ETMALL_PNAME2] = '" + result[14] + "',[ETMALL_PPRICE2]='" + str(result[15]) + "'"
-    #             ",[ETMALL_PNAME3] = '" + result[16] + "',[ETMALL_PPRICE3]='" + str(result[17]) + "'"
-    #             ",[YAHOO_PNAME1] = '" + result[18] + "',[YAHOO_PPRICE1]='" + str(result[19]) + "'"
-    #             ",[YAHOO_PNAME2] = '" + result[20] + "',[YAHOO_PPRICE2]='" + str(result[21]) + "'"
-    #             ",[YAHOO_PNAME3] = '" + result[22] + "',[YAHOO_PPRICE3]='" + str(result[23]) + "'"
-    #             ",[PCHOME_PNAME1] = '" + result[24] + "',[PCHOME_PPRICE1]='" + str(result[25]) + "'"
-    #             ",[PCHOME_PNAME2] = '" + result[26] + "',[PCHOME_PPRICE2]='" + str(result[27]) + "'"
-    #             ",[PCHOME_PNAME3] = '" + result[28] + "',[PCHOME_PPRICE3]='" + str(result[29]) + "'"
-    #             ",[MOMO_PNAME1] = '" + result[30] + "',[MOMO_PPRICE1]='" + str(result[31]) + "'"
-    #             ",[MOMO_PNAME2] = '" + result[32] + "',[MOMO_PPRICE2]='" + str(result[33]) + "'"
-    #             ",[MOMO_PNAME3] = '" + result[34] + "',[MOMO_PPRICE3]='" + str(result[35]) + "'"
-    #             ",[UDN_PNAME1] = '" + result[36] + "',[UDN_PPRICE1]='" + str(result[37]) + "'"
-    #             ",[UDN_PNAME2] = '" + result[38] + "',[UDN_PPRICE2]='" + str(result[39]) + "'"
-    #             ",[UDN_PNAME3] = '" + result[40] + "',[UDN_PPRICE3]='" + str(result[41]) + "'"
-    #             ",[GOHAPPY_PNAME1] = '" + result[42] + "',[GOHAPPY_PPRICE1]='" + str(result[43]) + "'"
-    #             ",[GOHAPPY_PNAME2] = '" + result[44] + "',[GOHAPPY_PPRICE2]='" + str(result[45]) + "'"
-    #             ",[GOHAPPY_PNAME3] = '" + result[46] + "',[GOHAPPY_PPRICE3]='" + str(result[47]) + "'"
+    #             " [ASAP_PNAME1] = '" + result[0].replace("'", '') + "',[ASAP_PPRICE1]='" + str(result[1]) + "'"
+    #             ",[ASAP_PNAME2] = '" + result[2].replace("'", '') + "',[ASAP_PPRICE2]='" + str(result[3]) + "'"
+    #             ",[ASAP_PNAME3] = '" + result[4].replace("'", '') + "',[ASAP_PPRICE3]='" + str(result[5]) + "'"
+    #             ",[UMALL_PNAME1] = '" + result[6].replace("'", '') + "',[UMALL_PPRICE1]='" + str(result[7]) + "'"
+    #             ",[UMALL_PNAME2] = '" + result[8].replace("'", '') + "',[UMALL_PPRICE2]='" + str(result[9]) + "'"
+    #             ",[UMALL_PNAME3] = '" + result[10].replace("'", '') + "',[UMALL_PPRICE3]='" + str(result[11]) + "'"
+    #             ",[ETMALL_PNAME1] = '" + result[12].replace("'", '') + "',[ETMALL_PPRICE1]='" + str(result[13]) + "'"
+    #             ",[ETMALL_PNAME2] = '" + result[14].replace("'", '') + "',[ETMALL_PPRICE2]='" + str(result[15]) + "'"
+    #             ",[ETMALL_PNAME3] = '" + result[16].replace("'", '') + "',[ETMALL_PPRICE3]='" + str(result[17]) + "'"
+    #             ",[YAHOO_PNAME1] = '" + result[18].replace("'", '') + "',[YAHOO_PPRICE1]='" + str(result[19]) + "'"
+    #             ",[YAHOO_PNAME2] = '" + result[20].replace("'", '') + "',[YAHOO_PPRICE2]='" + str(result[21]) + "'"
+    #             ",[YAHOO_PNAME3] = '" + result[22].replace("'", '') + "',[YAHOO_PPRICE3]='" + str(result[23]) + "'"
+    #             ",[PCHOME_PNAME1] = '" + result[24].replace("'", '') + "',[PCHOME_PPRICE1]='" + str(result[25]) + "'"
+    #             ",[PCHOME_PNAME2] = '" + result[26].replace("'", '') + "',[PCHOME_PPRICE2]='" + str(result[27]) + "'"
+    #             ",[PCHOME_PNAME3] = '" + result[28].replace("'", '') + "',[PCHOME_PPRICE3]='" + str(result[29]) + "'"
+    #             ",[MOMO_PNAME1] = '" + result[30].replace("'", '') + "',[MOMO_PPRICE1]='" + str(result[31]) + "'"
+    #             ",[MOMO_PNAME2] = '" + result[32].replace("'", '') + "',[MOMO_PPRICE2]='" + str(result[33]) + "'"
+    #             ",[MOMO_PNAME3] = '" + result[34].replace("'", '') + "',[MOMO_PPRICE3]='" + str(result[35]) + "'"
+    #             ",[UDN_PNAME1] = '" + result[36].replace("'", '') + "',[UDN_PPRICE1]='" + str(result[37]) + "'"
+    #             ",[UDN_PNAME2] = '" + result[38].replace("'", '') + "',[UDN_PPRICE2]='" + str(result[39]) + "'"
+    #             ",[UDN_PNAME3] = '" + result[40].replace("'", '') + "',[UDN_PPRICE3]='" + str(result[41]) + "'"
+    #             ",[GOHAPPY_PNAME1] = '" + result[42].replace("'", '') + "',[GOHAPPY_PPRICE1]='" + str(result[43]) + "'"
+    #             ",[GOHAPPY_PNAME2] = '" + result[44].replace("'", '') + "',[GOHAPPY_PPRICE2]='" + str(result[45]) + "'"
+    #             ",[GOHAPPY_PNAME3] = '" + result[46].replace("'", '') + "',[GOHAPPY_PPRICE3]='" + str(result[47]) + "'"
     #             " where [PID_NUM] = " + str(parse_store[i][0]))
     #     np.do_query(sql_stat)
     #     np.do_commit()
@@ -840,7 +866,7 @@ if __name__ == '__main__':
     # # # print(price.yahoo())
     # price.to_ES()
     # print(price.from_ES())
-    # test = ['【烏來】雲頂溫泉行館-2小時套房泡湯休憩券(101專案)']
+    # test = ['【M2nd】馬德里牛皮防水布包 (黑)']
     # for i in test:
     #     haha = price_compare(i)
     #     print(haha.from_ES())
@@ -858,8 +884,9 @@ if __name__ == '__main__':
     #     print(('MOMO購物', len(price.momo())))
     #     print(('UDN購物', len(price.udn())))
     #     print(('gohappy', len(price.gohappy())))
-    price = price_compare("【烏來】雲頂溫泉行館-2小時套房泡湯休憩券(101專案)")
-    # print(price.correct_product_name)
+    price = price_compare("ESTEE LAUDER雅詩蘭黛 DNA特潤再生超導修護露 75ml 微分子肌底原生露7ml組")
+    print(price.correct_product_name)
+    # # print(price.correct_product_name)
     # print(('ASAP購物', price.asap()))
     # print(('森森購物', price.umall()))
     # print(('東森購物', price.etmall()))
