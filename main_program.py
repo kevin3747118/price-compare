@@ -291,15 +291,19 @@ class price_compare():
             if elements.find_all('dd'):
                 break
             else:
-                for product in elements.find_all('li', {'class': 'prodname'}):
+                if elements.find('li', {'class': 'intro-txt'}).strong:
+                    break
+                else:
+                    for product in elements.find_all('li', {'class': 'prodname'}):
                 # if ('【線上兌換】' not in product.text) and ('【兌】' not in product.text) and ('(兌換)' not in product.text):
-                    gohappy_list.append(product.text.replace('\n', ''))
+                #     gohappy_list.append(product.text.replace('\n', ''))
+                        gohappy_list.append(product.h3.a.string)
                     # print(product.text.replace('\n', ''))
-                for prices in elements.find_all('table', {'class': 'price-table'}):
-                    if '純點數' not in prices.text:
-                        for price in prices.find_all('strong'):
-                            print(price.text)
-                        #     gohappy_list.append(price.text)
+                # if elements.find('li', {'class': 'intro-txt'}).strong)
+                    for prices in elements.find_all('li', {'class': 'price-txt'}):
+                        if '純點數' not in prices.text:
+                            gohappy_list.append(prices.strong.string)
+
 
         ####將結果變成list裡面包tuple(產品, 價格)####
         gohappy_display = list()
@@ -311,7 +315,7 @@ class price_compare():
             a, b = b, b + 2
         ####將結果變成list裡面包tuple(產品, 價格)####
 
-        # return gohappy_display
+        return gohappy_display
         # return gohappy_list
 
     def yahoo(self):
@@ -875,7 +879,7 @@ if __name__ == '__main__':
 
     # print(price.from_ES())
     # for i in range(5):
-    #     price = price_compare('Victorinox Altmont 3.0 標準型後背包')
+    #     price = price_compare('德國Healthlead負離子清淨防潮除濕機   EPI 608G')
     #     print(('ASAP購物', len(price.asap())))
     #     print(('森森購物', len(price.umall())))
     #     print(('東森購物', len(price.etmall())))
@@ -884,8 +888,8 @@ if __name__ == '__main__':
     #     print(('MOMO購物', len(price.momo())))
     #     print(('UDN購物', len(price.udn())))
     #     print(('gohappy', len(price.gohappy())))
-    price = price_compare("ESTEE LAUDER雅詩蘭黛 DNA特潤再生超導修護露 75ml 微分子肌底原生露7ml組")
-    print(price.correct_product_name)
+    # price = price_compare("施巴嬰兒泡泡露 乳液護膚組")
+    # print(price.correct_product_name)
     # # print(price.correct_product_name)
     # print(('ASAP購物', price.asap()))
     # print(('森森購物', price.umall()))
@@ -894,7 +898,7 @@ if __name__ == '__main__':
     # print(('PCHOME購物', price.pchome()))
     # print(('MOMO購物', price.momo()))
     # print(('UDN購物',price.udn()))
-    print(('gohappy', price.gohappy()))
+    # print(('gohappy', price.gohappy()))
     # price.to_ES()
     # price = price_compare(Sunlus三樂事暖暖熱敷柔毛墊(大)-MHP811)
     # print(price.from_ES())
