@@ -868,3 +868,4 @@ if __name__ == '__main__':
     print(('MOMO購物', price.momo()))
     print(('UDN購物',price.udn()))
     print(('gohappy', price.gohappy()))
+    print('ok')
