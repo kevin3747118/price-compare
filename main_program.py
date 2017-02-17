@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from bs4 import BeautifulSoup
 import urllib.request
 import random
@@ -320,7 +321,13 @@ class price_compare():
 
     def yahoo(self):
 
-        result = self.get_page(self.__yahoo_url)
+        try:
+            result = self.get_page(self.__yahoo_url)
+        except:
+            data = {'p': self.correct_product_name, 'qt': 'product', 'cid': '', 'clv': ''}
+            result = requests.get('https://tw.search.buy.yahoo.com/search/shopping/product?', params=data)
+            result = BeautifulSoup(result.text, 'lxml')
+
         yahoo = list()
 
         if result.find_all('div', {'class': 'wrap yui3-g'}):
@@ -453,7 +460,6 @@ class price_compare():
             parameters = {'sm_seq_list[]': pro_id,
                           'is_cross': 'false',
                           'cross_country': ''}
-
             result = requests.post('http://www.asap.com.tw/category/get_real_time_data', data=parameters)
             result_dict = json.loads(result.text)
 
@@ -794,37 +800,17 @@ class price_compare():
 
 
 if __name__ == '__main__':
-#
-    np = payeasy.db('AZURE')
-    parse_store = np.do_query("SELECT [PID_NUM],[PRO_NAME],[PWB_NAME] "
-                                "FROM [dbo].[PRODUCT_PRICE_COMPARE] WHERE ASAP_PNAME1 is null")
 
-    # ###test area###
-    # # asap_data, gohappy_data, udn_data, pchome_data,
-    # # momo_data, yahoo_data, etmall_data, umall_data]
-    # # for i in range(len(parse_store)):
-    # #     price = price_compare(parse_store[i][1])
-    # #     print(price.correct_product_name)
-    # #     price.to_ES()
-    # # price = price_compare('Sunlus三樂事暖暖熱敷柔毛墊 大 -MHP811')
-    # # print(price.correct_product_name)
-    # # print(price.from_ES())
-    # # print(price.umall())
-    # # print(price.etmall())
-    # # price.to_ES()
-    # # print(price.from_ES())
-    # # print(len(price.from_ES()))
-    # ###test area###
+    # np = payeasy.db('AZURE')
+    # parse_store = np.do_query("SELECT [PID_NUM],[PRO_NAME],[PWB_NAME] "
+    #                           "FROM [dbo].[PRODUCT_PRICE_COMPARE] WHERE ASAP_PNAME1 is null")
     #
     # print('start parsing store data')
     # for i in range(len(parse_store)):
     #     price = price_compare(parse_store[i][1])
-    #         # print(price.correct_product_name)
+    #     print(price.correct_product_name)
     #     result = price.from_ES()
-    #         # print(result)
-    #         # print('\n')
-    #     # except Exception as e:
-    #     #     print(e)
+    # #     print(result)
     #     sql_stat = (
     #             "update [dbo].[PRODUCT_PRICE_COMPARE] set "
     #             " [ASAP_PNAME1] = '" + result[0].replace("'", '') + "',[ASAP_PPRICE1]='" + str(result[1]) + "'"
@@ -856,49 +842,29 @@ if __name__ == '__main__':
     #     np.do_commit()
     # print('finish parsing store data')
 
-
-    # print(price_compare('Victorinox Altmont 3.0 標準型後背包').from_ES())
-    # print(test3.correct_product_name)
-    # print(test3.from_ES())
-    # test.to_ES()
-    # print(test.from_ES())
-    # price = price_compare('SONY SBH80 立體聲頸掛式藍芽耳機')
-    # print(price.from_ES())
-
-
+    # ###test area###
+    # # asap_data, gohappy_data, udn_data, pchome_data,
+    # # momo_data, yahoo_data, etmall_data, umall_data]
+    # # for i in range(len(parse_store)):
+    # #     price = price_compare(parse_store[i][1])
+    # #     print(price.correct_product_name)
+    # #     price.to_ES()
+    # # price = price_compare('Sunlus三樂事暖暖熱敷柔毛墊 大 -MHP811')
     # # print(price.correct_product_name)
-    # # # print(price.yahoo())
-    # price.to_ES()
-    # print(price.from_ES())
-    # test = ['【M2nd】馬德里牛皮防水布包 (黑)']
-    # for i in test:
-    #     haha = price_compare(i)
-    #     print(haha.from_ES())
+    # # print(price.from_ES())
+    # # print(price.umall())
+    # # print(price.etmall())
+    # # price.to_ES()
+    # # print(price.from_ES())
+    # # print(len(price.from_ES()))
+    # ###test area###
 
-
-
-    # print(price.from_ES())
-    # for i in range(5):
-    #     price = price_compare('德國Healthlead負離子清淨防潮除濕機   EPI 608G')
-    #     print(('ASAP購物', len(price.asap())))
-    #     print(('森森購物', len(price.umall())))
-    #     print(('東森購物', len(price.etmall())))
-    #     print(('YAHOO購物', len(price.yahoo())))
-    #     print(('PCHOME購物', len(price.pchome())))
-    #     print(('MOMO購物', len(price.momo())))
-    #     print(('UDN購物', len(price.udn())))
-    #     print(('gohappy', len(price.gohappy())))
-    # price = price_compare("施巴嬰兒泡泡露 乳液護膚組")
-    # print(price.correct_product_name)
-    # # print(price.correct_product_name)
-    # print(('ASAP購物', price.asap()))
-    # print(('森森購物', price.umall()))
-    # print(('東森購物', price.etmall()))
-    # print(('YAHOO購物', price.yahoo()))
-    # print(('PCHOME購物', price.pchome()))
-    # print(('MOMO購物', price.momo()))
-    # print(('UDN購物',price.udn()))
-    # print(('gohappy', price.gohappy()))
-    # price.to_ES()
-    # price = price_compare(Sunlus三樂事暖暖熱敷柔毛墊(大)-MHP811)
-    # print(price.from_ES())
+    price = price_compare('Sunlus三樂事暖暖熱敷柔毛墊(大)-MHP811')
+    print(('ASAP購物', price.asap()))
+    print(('森森購物', price.umall()))
+    print(('東森購物', price.etmall()))
+    print(('YAHOO購物', price.yahoo()))
+    print(('PCHOME購物', price.pchome()))
+    print(('MOMO購物', price.momo()))
+    print(('UDN購物',price.udn()))
+    print(('gohappy', price.gohappy()))
