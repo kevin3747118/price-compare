@@ -859,7 +859,7 @@ if __name__ == '__main__':
     # # print(len(price.from_ES()))
     # ###test area###
 
-    price = price_compare('Sunlus三樂事暖暖熱敷柔毛墊(大)-MHP811')
+    price = price_compare('ONPRO MA-SP07 金屬質感攜帶型無線藍牙喇叭')
     print(('ASAP購物', price.asap()))
     print(('森森購物', price.umall()))
     print(('東森購物', price.etmall()))
@@ -868,4 +868,4 @@ if __name__ == '__main__':
     print(('MOMO購物', price.momo()))
     print(('UDN購物',price.udn()))
     print(('gohappy', price.gohappy()))
-    print('ok')
+    # print('ok')

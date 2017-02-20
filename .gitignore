@@ -1,5 +1,6 @@
 *.idea
 *.ipynb_checkpoints
 [Tt]est*
+__pycache__
 payeasy*
 *.ipynb	
