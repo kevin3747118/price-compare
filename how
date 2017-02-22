@@ -1,0 +1,15 @@
+[33mcommit f3300caa3020ad584b8a398fcef29db4eda90715[m
+Author: kevin huang <kevin3747118@outlook.com>
+Date:   Fri Feb 17 12:06:59 2017 +0800
+
+    version 5
+
+[1mdiff --git a/main_program.py b/main_program.py[m
+[1mindex ec825ed..5f331b5 100644[m
+[1m--- a/main_program.py[m
+[1m+++ b/main_program.py[m
+[36m@@ -868,3 +868,4 @@[m [mif __name__ == '__main__':[m
+     print(('MOMO購物', price.momo()))[m
+     print(('UDN購物',price.udn()))[m
+     print(('gohappy', price.gohappy()))[m
+[32m+[m[32m    print('ok')[m
