@@ -727,7 +727,7 @@ class price_compare():
             {
                 "multi_match": {
                 "fields": ["name"],
-                "query": "【3M】淨呼吸防蹣枕頭套2入(AB2111)"
+                "query": self.correct_product_name
                 }
             }
           ]
@@ -814,7 +814,7 @@ class price_compare():
             return store_data
 
         data = ES_store_data()
-        self.delte_ES()
+        # self.delte_ES()
         return data
 
     def main(self):
@@ -825,7 +825,7 @@ if __name__ == '__main__':
 
     np = payeasy.db('AZURE')
     parse_store = np.do_query("SELECT [PID_NUM],[PRO_NAME],[PWB_NAME], [售價] "
-                              "FROM [dbo].[PRODUCT_PRICE_COMPARE2] WHERE ASAP_PNAME1 is null")
+                              "FROM [dbo].[PRODUCT_PRICE_COMPARE2] WHERE PID_NUM = 3169395")
 
     print('start parsing store data')
     for i in range(len(parse_store)):
@@ -833,7 +833,7 @@ if __name__ == '__main__':
         # print(parse_store)
         print(price.correct_product_name)
         result = price.from_ES()
-        print(result)
+    #     print(result)
         sql_stat = (
                 "update [dbo].[PRODUCT_PRICE_COMPARE2] set "
                 " [ASAP_PNAME1] = '" + result[0].replace("'", '') + "',[ASAP_PPRICE1]='" + str(result[1]) + "'"
@@ -882,7 +882,7 @@ if __name__ == '__main__':
     # # print(len(price.from_ES()))
     # ###test area###
 
-    # price = price_compare('大同全不鏽鋼配件電鍋11人份TAC 11KN')
+    # price = price_compare('飛利浦智慧變頻電磁爐HD4921', 1350)
     # print(('ASAP購物', price.asap()))
     # print(('森森購物', price.umall()))
     # print(('東森購物', price.etmall()))
