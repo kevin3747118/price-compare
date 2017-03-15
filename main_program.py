@@ -1,12 +1,8 @@
 #-*- coding: utf-8 -*-
 from bs4 import BeautifulSoup
 import urllib.request
-import random
-import re
-import json
 from payeasy import payeasy
-import time
-import requests
+import time, datetime, json, re, random, requests, logging
 from elasticsearch import Elasticsearch
 
 
@@ -25,7 +21,7 @@ class price_compare():
                     self.product_name = self.product_name.replace(i, ' ')
             return self.product_name.replace('福利網獨享', '').replace('單一規格', '')
 
-        self.es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
+        self.es = Elasticsearch([{'host': '10.10.110.156', 'port': 9200}])
         self.product_name = product_name
         self.product_price_get = int(product_price - (product_price * 0.3))
         self.product_price_let = int(product_price + (product_price * 0.3))
@@ -624,6 +620,7 @@ class price_compare():
                     ",[GOHAPPY_PNAME1] = '',[GOHAPPY_PPRICE1]='' "
                     ",[GOHAPPY_PNAME2] = '',[GOHAPPY_PPRICE2]='' "
                     ",[GOHAPPY_PNAME3] = '',[GOHAPPY_PPRICE3]='' "
+                    ",[PARSE_DATE] = '" + str(datetime.datetime.today().strftime("%Y%m%d")) + "'"
                     " where [PID_NUM] = " + str(self.pid_num))
         db = payeasy.db('AZURE')
         db.do_query(sql_stat)
@@ -879,54 +876,61 @@ class price_compare():
 
 if __name__ == '__main__':
 
-    np = payeasy.db('AZURE')
-    parse_store = np.do_query("SELECT [PID_NUM],[PRO_NAME],[PWB_NAME], [售價] "
-                              "FROM [dbo].[PRODUCT_PRICE_COMPARE2] WHERE ASAP_PNAME1 is null")
-
-    print('start parsing store data')
-    count = 0
-    count_list = [150, 300, 450, 500, 550, 700, 850, 1000, 1150]
-    for i in range(len(parse_store)):
-        count += 1
-        if count in count_list:
-            time.sleep(60)
-        price = price_compare(parse_store[i][1], int(parse_store[i][3]), int(parse_store[i][0]))
-        print(price.correct_product_name)
-        try:
-            result = price.from_ES()
-    # #     print(result)
-            sql_stat = (
-                    "update [dbo].[PRODUCT_PRICE_COMPARE2] set "
-                    " [ASAP_PNAME1] = '" + result[0].replace("'", '') + "',[ASAP_PPRICE1]='" + str(result[1]) + "'"
-                    ",[ASAP_PNAME2] = '" + result[2].replace("'", '') + "',[ASAP_PPRICE2]='" + str(result[3]) + "'"
-                    ",[ASAP_PNAME3] = '" + result[4].replace("'", '') + "',[ASAP_PPRICE3]='" + str(result[5]) + "'"
-                    ",[UMALL_PNAME1] = '" + result[6].replace("'", '') + "',[UMALL_PPRICE1]='" + str(result[7]) + "'"
-                    ",[UMALL_PNAME2] = '" + result[8].replace("'", '') + "',[UMALL_PPRICE2]='" + str(result[9]) + "'"
-                    ",[UMALL_PNAME3] = '" + result[10].replace("'", '') + "',[UMALL_PPRICE3]='" + str(result[11]) + "'"
-                    ",[ETMALL_PNAME1] = '" + result[12].replace("'", '') + "',[ETMALL_PPRICE1]='" + str(result[13]) + "'"
-                    ",[ETMALL_PNAME2] = '" + result[14].replace("'", '') + "',[ETMALL_PPRICE2]='" + str(result[15]) + "'"
-                    ",[ETMALL_PNAME3] = '" + result[16].replace("'", '') + "',[ETMALL_PPRICE3]='" + str(result[17]) + "'"
-                    ",[YAHOO_PNAME1] = '" + result[18].replace("'", '') + "',[YAHOO_PPRICE1]='" + str(result[19]) + "'"
-                    ",[YAHOO_PNAME2] = '" + result[20].replace("'", '') + "',[YAHOO_PPRICE2]='" + str(result[21]) + "'"
-                    ",[YAHOO_PNAME3] = '" + result[22].replace("'", '') + "',[YAHOO_PPRICE3]='" + str(result[23]) + "'"
-                    ",[PCHOME_PNAME1] = '" + result[24].replace("'", '') + "',[PCHOME_PPRICE1]='" + str(result[25]) + "'"
-                    ",[PCHOME_PNAME2] = '" + result[26].replace("'", '') + "',[PCHOME_PPRICE2]='" + str(result[27]) + "'"
-                    ",[PCHOME_PNAME3] = '" + result[28].replace("'", '') + "',[PCHOME_PPRICE3]='" + str(result[29]) + "'"
-                    ",[MOMO_PNAME1] = '" + result[30].replace("'", '') + "',[MOMO_PPRICE1]='" + str(result[31]) + "'"
-                    ",[MOMO_PNAME2] = '" + result[32].replace("'", '') + "',[MOMO_PPRICE2]='" + str(result[33]) + "'"
-                    ",[MOMO_PNAME3] = '" + result[34].replace("'", '') + "',[MOMO_PPRICE3]='" + str(result[35]) + "'"
-                    ",[UDN_PNAME1] = '" + result[36].replace("'", '') + "',[UDN_PPRICE1]='" + str(result[37]) + "'"
-                    ",[UDN_PNAME2] = '" + result[38].replace("'", '') + "',[UDN_PPRICE2]='" + str(result[39]) + "'"
-                    ",[UDN_PNAME3] = '" + result[40].replace("'", '') + "',[UDN_PPRICE3]='" + str(result[41]) + "'"
-                    ",[GOHAPPY_PNAME1] = '" + result[42].replace("'", '') + "',[GOHAPPY_PPRICE1]='" + str(result[43]) + "'"
-                    ",[GOHAPPY_PNAME2] = '" + result[44].replace("'", '') + "',[GOHAPPY_PPRICE2]='" + str(result[45]) + "'"
-                    ",[GOHAPPY_PNAME3] = '" + result[46].replace("'", '') + "',[GOHAPPY_PPRICE3]='" + str(result[47]) + "'"
-                    " where [PID_NUM] = " + str(parse_store[i][0]))
-            np.do_query(sql_stat)
-            np.do_commit()
-        except Exception as error:
-            price.update_null()
-    print('finish parsing store data')
+    # logger = logging.getLogger('PRICE_COMPARE :')
+    # format = '%(asctime)s %(message)s'
+    # logger.basicConfig(format=format, level=logging.INFO, filename='price_compare.log')
+    # # logging.basicConfig(level=logging.INFO, filename='price_compare.log')
+    #
+    # np = payeasy.db('AZURE')
+    # parse_store = np.do_query("""SELECT [PID_NUM],[PRO_NAME],[PWB_NAME], [售價]
+    #                              FROM [dbo].[PRODUCT_PRICE_COMPARE2] WHERE ASAP_PNAME1 is null""")
+    # logging.info('start parsing store data')
+    # count = 0
+    # count_list = [150, 300, 450, 500, 550, 700, 850, 1000, 1150]
+    # for i in range(len(parse_store)):
+    #     count += 1
+    #     if count in count_list:
+    #         time.sleep(60)
+    #     price = price_compare(parse_store[i][1], int(parse_store[i][3]), int(parse_store[i][0]))
+    #     logger.info(price.correct_product_name)
+    #     try:
+    #         result = price.from_ES()
+    # # #     print(result)
+    #         sql_stat = (
+    #                 "update [dbo].[PRODUCT_PRICE_COMPARE2] set "
+    #                 " [ASAP_PNAME1] = '" + result[0].replace("'", '') + "',[ASAP_PPRICE1]='" + str(result[1]) + "'"
+    #                 ",[ASAP_PNAME2] = '" + result[2].replace("'", '') + "',[ASAP_PPRICE2]='" + str(result[3]) + "'"
+    #                 ",[ASAP_PNAME3] = '" + result[4].replace("'", '') + "',[ASAP_PPRICE3]='" + str(result[5]) + "'"
+    #                 ",[UMALL_PNAME1] = '" + result[6].replace("'", '') + "',[UMALL_PPRICE1]='" + str(result[7]) + "'"
+    #                 ",[UMALL_PNAME2] = '" + result[8].replace("'", '') + "',[UMALL_PPRICE2]='" + str(result[9]) + "'"
+    #                 ",[UMALL_PNAME3] = '" + result[10].replace("'", '') + "',[UMALL_PPRICE3]='" + str(result[11]) + "'"
+    #                 ",[ETMALL_PNAME1] = '" + result[12].replace("'", '') + "',[ETMALL_PPRICE1]='" + str(result[13]) + "'"
+    #                 ",[ETMALL_PNAME2] = '" + result[14].replace("'", '') + "',[ETMALL_PPRICE2]='" + str(result[15]) + "'"
+    #                 ",[ETMALL_PNAME3] = '" + result[16].replace("'", '') + "',[ETMALL_PPRICE3]='" + str(result[17]) + "'"
+    #                 ",[YAHOO_PNAME1] = '" + result[18].replace("'", '') + "',[YAHOO_PPRICE1]='" + str(result[19]) + "'"
+    #                 ",[YAHOO_PNAME2] = '" + result[20].replace("'", '') + "',[YAHOO_PPRICE2]='" + str(result[21]) + "'"
+    #                 ",[YAHOO_PNAME3] = '" + result[22].replace("'", '') + "',[YAHOO_PPRICE3]='" + str(result[23]) + "'"
+    #                 ",[PCHOME_PNAME1] = '" + result[24].replace("'", '') + "',[PCHOME_PPRICE1]='" + str(result[25]) + "'"
+    #                 ",[PCHOME_PNAME2] = '" + result[26].replace("'", '') + "',[PCHOME_PPRICE2]='" + str(result[27]) + "'"
+    #                 ",[PCHOME_PNAME3] = '" + result[28].replace("'", '') + "',[PCHOME_PPRICE3]='" + str(result[29]) + "'"
+    #                 ",[MOMO_PNAME1] = '" + result[30].replace("'", '') + "',[MOMO_PPRICE1]='" + str(result[31]) + "'"
+    #                 ",[MOMO_PNAME2] = '" + result[32].replace("'", '') + "',[MOMO_PPRICE2]='" + str(result[33]) + "'"
+    #                 ",[MOMO_PNAME3] = '" + result[34].replace("'", '') + "',[MOMO_PPRICE3]='" + str(result[35]) + "'"
+    #                 ",[UDN_PNAME1] = '" + result[36].replace("'", '') + "',[UDN_PPRICE1]='" + str(result[37]) + "'"
+    #                 ",[UDN_PNAME2] = '" + result[38].replace("'", '') + "',[UDN_PPRICE2]='" + str(result[39]) + "'"
+    #                 ",[UDN_PNAME3] = '" + result[40].replace("'", '') + "',[UDN_PPRICE3]='" + str(result[41]) + "'"
+    #                 ",[GOHAPPY_PNAME1] = '" + result[42].replace("'", '') + "',[GOHAPPY_PPRICE1]='" + str(result[43]) + "'"
+    #                 ",[GOHAPPY_PNAME2] = '" + result[44].replace("'", '') + "',[GOHAPPY_PPRICE2]='" + str(result[45]) + "'"
+    #                 ",[GOHAPPY_PNAME3] = '" + result[46].replace("'", '') + "',[GOHAPPY_PPRICE3]='" + str(result[47]) + "'"
+    #                 ",[PARSE_DATE] = '" + str(datetime.datetime.today().strftime("%Y%m%d")) + "'"
+    #                 " where [PID_NUM] = " + str(parse_store[i][0]))
+    #         # print(sql_stat)
+    #         np.do_query(sql_stat)
+    #         np.do_commit()
+    #     except Exception as error:
+    #         price.update_null()
+    # # print('finish parsing store data')
+    # logger.info('finish parsing store data')
 
     # ###test area###
     # # asap_data, gohappy_data, udn_data, pchome_data,
@@ -945,14 +949,14 @@ if __name__ == '__main__':
     # # print(len(price.from_ES()))
     # ###test area###
 
-    # price = price_compare('BenQ 49IE6500 49吋護眼黑湛屏大型液晶', 14900, 2538165)
-    # print(price.correct_product_name)
-    # print(('ASAP購物', price.asap()))
-    # print(('森森購物', price.umall()))
-    # print(('東森購物', price.etmall()))
-    # print(('YAHOO購物', price.yahoo()))
-    # print(('PCHOME購物', price.pchome()))
-    # print(('MOMO購物', price.momo()))
-    # print(('UDN購物',price.udn()))
-    # print(('gohappy', price.gohappy()))
+    price = price_compare('亮瞳葉黃素三盒明漾組', 1140, 2538165)
+    print(price.correct_product_name)
+    print(('ASAP購物', price.asap()))
+    print(('森森購物', price.umall()))
+    print(('東森購物', price.etmall()))
+    print(('YAHOO購物', price.yahoo()))
+    print(('PCHOME購物', price.pchome()))
+    print(('MOMO購物', price.momo()))
+    print(('UDN購物',price.udn()))
+    print(('gohappy', price.gohappy()))
     # print('ok')
